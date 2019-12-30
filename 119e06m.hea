@@ -1,0 +1,6 @@
+119e06m 2 360 3600
+119e06m.mat 16+192 200(1024)/mV 11 0 -196 18629 0 MLII
+119e06m.mat 16+192 200(1024)/mV 11 0 -115 19909 0 V1
+# Created by `nst' from records 119 and em (SNR = 6 dB)
+#Creator: wfdb2mat
+#Source: record nstdb/119e06  Start: 0:00.000
