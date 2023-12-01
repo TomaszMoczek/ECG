@@ -5,7 +5,7 @@ class Ecg:
         self.base = 1024
         pass
 
-    async def get_data(self, file_path: str) -> tuple(list, list):
+    def get_data(self, file_path: str):
         mlii = []
         v1 = []
         return mlii, v1

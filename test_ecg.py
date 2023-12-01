@@ -1,10 +1,7 @@
-import ecg
+from ecg import Ecg
 
 
-def test_increment():
-    assert inc_dec.increment(3) == 4
-
-
-# This test is designed to fail for demonstration purposes.
-def test_decrement():
-    assert inc_dec.decrement(3) == 4
+def test_get_data():
+    ecg = Ecg()
+    mlii, v1 = ecg.get_data("./test.csv")
+    assert len(mlii) == 3600 and len(v1) == 3600

@@ -11,27 +11,27 @@ class DspPlotter:
     def __init__(self) -> None:
         pass
 
-    async def __gen_ticks(self, stop, start=10) -> None:
+    def __gen_ticks(self, stop, start=10) -> None:
         yield start
         for s in range(1, 10):
             if start * s > stop:
                 yield stop
                 return
             yield start * s
-        for t in await self.__gen_ticks(stop, start * 10):
+        for t in self.__gen_ticks(stop, start * 10):
             yield t
 
-    async def __gen_tick_labels(self, stop, start=10) -> None:
+    def __gen_tick_labels(self, stop, start=10) -> None:
         yield (str(int(start)) + "Hz").replace("000Hz", "kHz")
         for s in range(1, 10):
             if start * s > stop:
                 yield (str(int(stop)) + "Hz").replace("000Hz", "kHz")
                 return
             yield ""
-        for t in await self.__gen_tick_labels(stop, start * 10):
+        for t in self.__gen_tick_labels(stop, start * 10):
             yield t
 
-    async def __smooth_colormap(
+    def __smooth_colormap(
         self, colors, name="cmap1"
     ) -> matplotlib.colors.LinearSegmentedColormap:
         to_rgb = matplotlib.colors.ColorConverter().to_rgb
@@ -48,7 +48,7 @@ class DspPlotter:
         pyplot.register_cmap(name=name, cmap=cmap)
         return cmap
 
-    async def __wavplot(
+    def __wavplot(
         self,
         data,
         title="Title",
@@ -60,7 +60,7 @@ class DspPlotter:
         vmax=0,
         normalize=False,
     ) -> None:
-        cmap = await self.__smooth_colormap(
+        cmap = self.__smooth_colormap(
             [
                 (0, "#000000"),
                 (1 / 9, "#010325"),
@@ -90,7 +90,7 @@ class DspPlotter:
 
         datalen = len(data)
 
-        async def fast_resample(data, newlen):
+        def fast_resample(data, newlen):
             oldlen = len(data)
             result = []
             for i in range(newlen):
@@ -140,7 +140,7 @@ class DspPlotter:
         else:
             pyplot.savefig(file)
 
-    async def plot(
+    def plot(
         self,
         data,
         title="Title",
@@ -222,7 +222,7 @@ class DspPlotter:
                     "Frequency (Hz)",
                 ]
 
-                async def set_freq(a):
+                def set_freq(self, a):
                     if normalized_freq:
                         a.set_xlabel(freq_label[0])
                         X = numpy.linspace(0, 1, len(Y), False)
@@ -250,7 +250,7 @@ class DspPlotter:
                     freqplot = a[1]
                     if freq_dB_lim is not None:
                         freqplot.set_ylim(freq_dB_lim)
-                    X = await set_freq(freqplot)
+                    X = self.set_freq(freqplot)
                     freqplot.set_ylabel("Gain (dB)")
                     freqplot.grid(True, **grid_style)
                     freqplot.set_autoscalex_on(False)
@@ -264,7 +264,7 @@ class DspPlotter:
                         )
                     Yphase = numpy.angle(Y, deg=True)
                     Yphase = numpy.select([Yphase < -179, True], [Yphase + 360, Yphase])
-                    X = await set_freq(phaseplot)
+                    X = self.set_freq(phaseplot)
                     phaseplot.grid(True, **grid_style)
                     phaseplot.set_ylabel(
                         r"Phase (${\circ}$)"
@@ -282,7 +282,7 @@ class DspPlotter:
             else:
                 pyplot.savefig(file)
         else:
-            await self.__wavplot(
+            self.__wavplot(
                 data,
                 title=title,
                 file=file,
