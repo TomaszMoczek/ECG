@@ -181,7 +181,7 @@ class DspPlotter:
                 if horizontal
                 else pyplot.subplots(1, num, figsize=figsize)
             )
-            fig.suptitle(title, fontsize=16)
+            fig.suptitle(title)
             fig.subplots_adjust(top=0.85)
             rect = fig.patch
             rect.set_facecolor("#f0f0f0")
