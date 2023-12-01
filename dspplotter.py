@@ -222,7 +222,7 @@ class DspPlotter:
                     "Frequency (Hz)",
                 ]
 
-                def set_freq(self, a):
+                def set_freq(a):
                     if normalized_freq:
                         a.set_xlabel(freq_label[0])
                         X = numpy.linspace(0, 1, len(Y), False)
@@ -250,7 +250,7 @@ class DspPlotter:
                     freqplot = a[1]
                     if freq_dB_lim is not None:
                         freqplot.set_ylim(freq_dB_lim)
-                    X = self.set_freq(freqplot)
+                    X = set_freq(freqplot)
                     freqplot.set_ylabel("Gain (dB)")
                     freqplot.grid(True, **grid_style)
                     freqplot.set_autoscalex_on(False)
@@ -264,7 +264,7 @@ class DspPlotter:
                         )
                     Yphase = numpy.angle(Y, deg=True)
                     Yphase = numpy.select([Yphase < -179, True], [Yphase + 360, Yphase])
-                    X = self.set_freq(phaseplot)
+                    X = set_freq(phaseplot)
                     phaseplot.grid(True, **grid_style)
                     phaseplot.set_ylabel(
                         r"Phase (${\circ}$)"
