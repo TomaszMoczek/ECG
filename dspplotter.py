@@ -185,7 +185,7 @@ class DspPlotter:
             fig.subplots_adjust(top=0.85)
             rect = fig.patch
             rect.set_facecolor("#f0f0f0")
-            style = {"linewidth": 1.4, "color": "#0072bd"}
+            style = {"linewidth": 0.75, "color": "#0072bd"}
             grid_style = {"color": "#777777"}
 
             dataplot = a[0] if freqresp or phaseresp else a
