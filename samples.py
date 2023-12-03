@@ -29,7 +29,9 @@ class Samples:
             self.__v1.append(float(items[2]))
         return self.__mlii, self.__v1
 
-    def write_wave_file(self) -> None:
+    def write_wave_file(self) -> bool:
+        if len(self.__mlii) == 0 and len(self.__v1) == 0:
+            return False
         audio = numpy.array([self.__mlii, self.__v1]).T
         audio = (audio * (2**15 - 1)).astype("<h")
         with wave.open(
@@ -39,3 +41,4 @@ class Samples:
             file.setsampwidth(2)
             file.setframerate(self.__fs)
             file.writeframes(audio.tobytes())
+        return True

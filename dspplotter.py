@@ -1,10 +1,11 @@
 from __future__ import division
 
 import numpy
-from scipy import signal
 import matplotlib
-from matplotlib import pyplot
 import wave
+
+from scipy import signal
+from matplotlib import pyplot
 
 
 class DspPlotter:
@@ -48,14 +49,13 @@ class DspPlotter:
         pyplot.register_cmap(name=name, cmap=cmap)
         return cmap
 
-    def __wavplot(
+    def wavplot(
         self,
         data,
-        title="Title",
         file=None,
         segmentsize=512,
         overlap=8,
-        Fs=48000,
+        fs=48000,
         vmin=-160,
         vmax=0,
         normalize=False,
@@ -77,7 +77,7 @@ class DspPlotter:
 
         if not isinstance(data, (list, tuple, numpy.ndarray)):
             w = wave.open(data, "rb")
-            Fs = w.getframerate()
+            fs = w.getframerate()
             data = (
                 numpy.fromstring(w.readframes(w.getnframes()), dtype=numpy.int32)
                 / 2147483647.0
@@ -130,7 +130,7 @@ class DspPlotter:
             vmin=vmin,
             vmax=vmax,
             origin="lower",
-            extent=[0, datalen / Fs, 0, Fs / 2],
+            extent=[0, datalen / fs, 0, fs / 2],
             interpolation="bicubic",
         )
         pyplot.colorbar()
@@ -142,38 +142,24 @@ class DspPlotter:
 
     def plot(
         self,
-        data,
-        title="Title",
-        horizontal=True,
-        normalized_freq=False,
-        Fs=48000,
-        padwidth=1024,
-        log_freq=False,
-        file=None,
-        freqresp=True,
-        phaseresp=False,
-        dots=False,
-        segmentsize=512,
-        overlap=8,
-        div_by_N=False,
-        spectrogram=False,
-        vmin=-160,
-        vmax=0,
-        normalize=False,
-        freqticks=[],
+        data: tuple,
+        labels: tuple,
+        fs: int,
+        horizontal: bool = True,
+        normalize: bool = False,
+        freqresp: bool = True,
+        normalized_freq: bool = False,
+        padwidth: int = 1024,
+        log_freq: bool = False,
+        div_by_N: bool = False,
+        freqticks: list = [],
         freq_lim=None,
         freq_dB_lim=None,
+        phaseresp: bool = False,
         phasearg=None,
+        file=None,
     ) -> None:
-        if phasearg == "auto":
-            phasearg = (len(data) - 1) * 0.5
-
-        if isinstance(data, (list, tuple, numpy.ndarray)) and not spectrogram:
-            if normalize:
-                maxitem = max(abs(numpy.max(data)), abs(numpy.min(data)))
-                if maxitem > 0:
-                    data = data / maxitem
-            n = len(data)
+        if isinstance(data, (list, tuple, numpy.ndarray)):
             num = 1 + freqresp + phaseresp
             figsize = (10 if horizontal else 6 * num, 5 * num if horizontal else 6)
             fig, a = (
@@ -181,26 +167,29 @@ class DspPlotter:
                 if horizontal
                 else pyplot.subplots(1, num, figsize=figsize)
             )
-            fig.suptitle(title)
             fig.subplots_adjust(top=0.85)
             rect = fig.patch
             rect.set_facecolor("#f0f0f0")
-            style = {"linewidth": 0.75, "color": "#0072bd"}
             grid_style = {"color": "#777777"}
 
-            dataplot = a[0] if freqresp or phaseresp else a
+            n = len(data[0])
 
-            dataplot.plot(
-                numpy.arange(0, n / Fs, 1 / Fs),
-                data,
-                marker="." if dots else None,
-                **style
-            )
+            if normalize:
+                for i in range(len(data)):
+                    maxitem = max(abs(numpy.max(data[i])), abs(numpy.min(data[i])))
+                    if maxitem > 0:
+                        data[i] /= maxitem
+
+            dataplot = a[0] if freqresp or phaseresp else a
+            x = numpy.arange(0, n / fs, 1 / fs)
+            for i in range(len(data)):
+                dataplot.plot(x, data[i], label=labels[i], linewidth=0.75)
             dataplot.set_xlabel("Time [s]")
             dataplot.set_ylabel("Amplitude [mV]")
             dataplot.grid(True, **grid_style)
             dataplot.set_autoscalex_on(False)
-            dataplot.set_xlim([0, n / Fs])
+            dataplot.set_xlim([0, n / fs])
+            dataplot.legend(loc="best", shadow=True)
 
             numpy.seterr(all="ignore")
 
@@ -208,7 +197,7 @@ class DspPlotter:
                 padwidth = max(padwidth, n)
                 Y = numpy.fft.fft(
                     numpy.pad(
-                        data, (0, padwidth - n), "constant", constant_values=(0, 0)
+                        data[0], (0, padwidth - n), "constant", constant_values=(0, 0)
                     )
                 )
                 Y = Y[range(padwidth // 2)]
@@ -236,13 +225,13 @@ class DspPlotter:
                         if log_freq:
                             a.set_xscale("log")
 
-                            a.set_xticks(list(self.__gen_ticks(Fs / 2)))
-                            a.set_xticklabels(list(self.__gen_tick_labels(Fs / 2)))
-                        X = numpy.linspace(0, Fs / 2, len(Y), False)
+                            a.set_xticks(list(self.__gen_ticks(fs / 2)))
+                            a.set_xticklabels(list(self.__gen_tick_labels(fs / 2)))
+                        X = numpy.linspace(0, fs / 2, len(Y), False)
                         if freq_lim is not None:
                             a.set_xlim(freq_lim)
                         else:
-                            a.set_xlim([10, Fs / 2])
+                            a.set_xlim([10, fs / 2])
                         a.set_xticks(list(a.get_xticks()) + freqticks)
                     return X
 
@@ -254,11 +243,14 @@ class DspPlotter:
                     freqplot.set_ylabel("Gain (dB)")
                     freqplot.grid(True, **grid_style)
                     freqplot.set_autoscalex_on(False)
-                    freqplot.plot(X, Yfreq, **style)
+                    freqplot.plot(X, Yfreq, label=labels[0], linewidth=0.75)
+                    freqplot.legend(loc="best", shadow=True)
 
                 if phaseresp:
                     phaseplot = a[1 + freqresp]
                     if phasearg is not None:
+                        if phasearg == "auto":
+                            phasearg = (n - 1) * 0.5
                         Y = Y / 1j ** numpy.linspace(
                             0, -(phasearg * 2), len(Y), endpoint=False
                         )
@@ -273,7 +265,8 @@ class DspPlotter:
                     )
                     phaseplot.set_autoscaley_on(False)
                     phaseplot.set_ylim([-190, +190])
-                    phaseplot.plot(X, Yphase, **style)
+                    phaseplot.plot(X, Yphase, label=labels[0], linewidth=0.75)
+                    phaseplot.legend(loc="best", shadow=True)
 
             pyplot.tight_layout(rect=[0, 0.0, 1, 0.94])
 
@@ -281,76 +274,3 @@ class DspPlotter:
                 pyplot.show()
             else:
                 pyplot.savefig(file)
-        else:
-            self.__wavplot(
-                data,
-                title=title,
-                file=file,
-                segmentsize=segmentsize,
-                overlap=overlap,
-                Fs=Fs,
-                vmin=vmin,
-                vmax=vmax,
-                normalize=normalize,
-            )
-
-    def perfplot(self, data, labels, xlabel="X", units="ms", file=None):
-        styles = [
-            {
-                "color": "#F6511D",
-                "linestyle": "-",
-                "marker": "o",
-                "markersize": 10.0,
-                "markeredgecolor": "#FFFFFF",
-            },
-            {
-                "color": "#00A6ED",
-                "linestyle": "-",
-                "marker": "o",
-                "markersize": 10.0,
-                "markeredgecolor": "#FFFFFF",
-            },
-            {
-                "color": "#FFB400",
-                "linestyle": "-",
-                "marker": "o",
-                "markersize": 10.0,
-                "markeredgecolor": "#FFFFFF",
-            },
-            {
-                "color": "#7FB800",
-                "linestyle": "-",
-                "marker": "o",
-                "markersize": 10.0,
-                "markeredgecolor": "#FFFFFF",
-            },
-            {
-                "color": "#0D2C54",
-                "linestyle": "-",
-                "marker": "o",
-                "markersize": 10.0,
-                "markeredgecolor": "#FFFFFF",
-            },
-        ]
-        grid_style = {"color": "#777777"}
-        fig, ax = pyplot.subplots()
-        ax.grid(True, **grid_style)
-        data = map(list, zip(*data))
-        ticks = data[0]
-        data = data[1:]
-        for d, s, l in zip(data, styles, labels):
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel(units)
-            x = numpy.linspace(0, len(d), len(d), False)
-            ax.plot(x, d, linewidth=1.6, label=l, **s)
-
-        ax.set_ylim(bottom=0.0)
-        ax.legend(loc="lower center", shadow=True)
-
-        pyplot.xticks(x, ticks, rotation="vertical")
-        pyplot.tight_layout(rect=[0, 0.0, 1, 0.94])
-
-        if not file:
-            pyplot.show()
-        else:
-            pyplot.savefig(file)
