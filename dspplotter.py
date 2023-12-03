@@ -293,3 +293,64 @@ class DspPlotter:
                 vmax=vmax,
                 normalize=normalize,
             )
+
+    def perfplot(self, data, labels, xlabel="X", units="ms", file=None):
+        styles = [
+            {
+                "color": "#F6511D",
+                "linestyle": "-",
+                "marker": "o",
+                "markersize": 10.0,
+                "markeredgecolor": "#FFFFFF",
+            },
+            {
+                "color": "#00A6ED",
+                "linestyle": "-",
+                "marker": "o",
+                "markersize": 10.0,
+                "markeredgecolor": "#FFFFFF",
+            },
+            {
+                "color": "#FFB400",
+                "linestyle": "-",
+                "marker": "o",
+                "markersize": 10.0,
+                "markeredgecolor": "#FFFFFF",
+            },
+            {
+                "color": "#7FB800",
+                "linestyle": "-",
+                "marker": "o",
+                "markersize": 10.0,
+                "markeredgecolor": "#FFFFFF",
+            },
+            {
+                "color": "#0D2C54",
+                "linestyle": "-",
+                "marker": "o",
+                "markersize": 10.0,
+                "markeredgecolor": "#FFFFFF",
+            },
+        ]
+        grid_style = {"color": "#777777"}
+        fig, ax = pyplot.subplots()
+        ax.grid(True, **grid_style)
+        data = map(list, zip(*data))
+        ticks = data[0]
+        data = data[1:]
+        for d, s, l in zip(data, styles, labels):
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(units)
+            x = numpy.linspace(0, len(d), len(d), False)
+            ax.plot(x, d, linewidth=1.6, label=l, **s)
+
+        ax.set_ylim(bottom=0.0)
+        ax.legend(loc="lower center", shadow=True)
+
+        pyplot.xticks(x, ticks, rotation="vertical")
+        pyplot.tight_layout(rect=[0, 0.0, 1, 0.94])
+
+        if not file:
+            pyplot.show()
+        else:
+            pyplot.savefig(file)
