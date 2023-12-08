@@ -32,76 +32,20 @@ class DspPlotter:
         for t in self.__gen_tick_labels(stop, start * 10):
             yield t
 
-    def __smooth_colormap(
-        self, colors, name="cmap1"
-    ) -> matplotlib.colors.LinearSegmentedColormap:
-        to_rgb = matplotlib.colors.ColorConverter().to_rgb
-        colors = [(p, to_rgb(c)) for p, c in colors]
-        result = {"red": [], "green": [], "blue": []}
-        for index, item in enumerate(colors):
-            pos, color = item
-            if pos is not None:
-                r, g, b = color
-                result["red"].append([pos, r, r])
-                result["green"].append([pos, g, g])
-                result["blue"].append([pos, b, b])
-        cmap = matplotlib.colors.LinearSegmentedColormap(name, result)
-        pyplot.register_cmap(name=name, cmap=cmap)
-        return cmap
-
-    def wavplot(
+    def spectrogram(
         self,
-        data,
-        file=None,
-        segmentsize=512,
-        overlap=8,
-        fs=48000,
-        vmin=-160,
-        vmax=0,
-        normalize=False,
+        data: list,
+        fs: int,
+        segmentsize: int = 64,
+        overlap: int = 8,
+        vmin: int = -160,
+        vmax: int = 0,
+        file: str = None,
     ) -> None:
-        cmap = self.__smooth_colormap(
-            [
-                (0, "#000000"),
-                (1 / 9, "#010325"),
-                (2 / 9, "#130246"),
-                (3 / 9, "#51026e"),
-                (4 / 9, "#9e0379"),
-                (5 / 9, "#d6033e"),
-                (6 / 9, "#fc4d21"),
-                (7 / 9, "#fdc967"),
-                (8 / 9, "#f3fab8"),
-                (1, "#ffffff"),
-            ]
-        )
-
-        if not isinstance(data, (list, tuple, numpy.ndarray)):
-            w = wave.open(data, "rb")
-            fs = w.getframerate()
-            data = (
-                numpy.fromstring(w.readframes(w.getnframes()), dtype=numpy.int32)
-                / 2147483647.0
-            )
+        im = []
         data = numpy.array(data)
-        if normalize:
-            maxitem = max(abs(numpy.max(data)), abs(numpy.min(data)))
-            if maxitem > 0:
-                data = data / maxitem
-
-        datalen = len(data)
-
-        def fast_resample(data, newlen):
-            oldlen = len(data)
-            result = []
-            for i in range(newlen):
-                result.append(data[i * oldlen // newlen])
-            return numpy.array(result)
-
         datalen = len(data)
         segments = datalen // segmentsize - 1
-
-        im = []
-
         window = signal.hann(segmentsize * overlap)
 
         numpy.seterr(all="ignore")
@@ -125,7 +69,6 @@ class DspPlotter:
 
         pyplot.imshow(
             im,
-            cmap=cmap,
             aspect="auto",
             vmin=vmin,
             vmax=vmax,
@@ -157,7 +100,7 @@ class DspPlotter:
         freq_dB_lim=None,
         phaseresp: bool = False,
         phasearg=None,
-        file=None,
+        file: str = None,
     ) -> None:
         if isinstance(data, (list, tuple, numpy.ndarray)):
             num = 1 + freqresp + phaseresp

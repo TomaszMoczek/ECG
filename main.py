@@ -31,11 +31,7 @@ def main() -> None:
     )
 
     if is_spectrogram:
-        dsp_plotter.wavplot(
-            # data=data[0],
-            # fs=360
-            data=r"/home/tomasz/Projects/Console/audio_high_quality.wav"
-        )
+        dsp_plotter.spectrogram(data=data[0], fs=fs)
 
     if is_sound:
         pygame.mixer.music.stop()
