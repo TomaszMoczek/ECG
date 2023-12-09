@@ -34,49 +34,81 @@ class DspPlotter:
 
     def spectrogram(
         self,
-        data: list,
+        data: tuple,
+        labels: tuple,
         fs: int,
+        horizontal: bool = True,
         segmentsize: int = 64,
         overlap: int = 8,
         vmin: int = -160,
         vmax: int = 0,
         file: str = None,
     ) -> None:
-        im = []
-        data = numpy.array(data)
-        datalen = len(data)
-        segments = datalen // segmentsize - 1
-        window = signal.hann(segmentsize * overlap)
+        num = len(data)
 
-        numpy.seterr(all="ignore")
-
-        for segm in range(segments - overlap):
-            r = range(
-                segm * datalen // segments,
-                segm * datalen // segments + segmentsize * overlap,
+        if num == 0:
+            print(
+                "No data is likely provided for the spectrogram to be correctly plotted."
             )
-            subdata = data[r]
-            subdata = subdata * window
-            n = len(subdata)
-            Y = numpy.fft.fft(subdata) / n
-            Y = Y[range(len(Y) // 2)]
-            Yfreq = 20 * numpy.log10(numpy.absolute(Y))
-            Yfreq = signal.resample(Yfreq, 512)
-            Yfreq = numpy.fmax(-300, Yfreq)
-            im.append(Yfreq)
+            return
 
-        im = numpy.transpose(im)
-
-        pyplot.imshow(
-            im,
-            aspect="auto",
-            vmin=vmin,
-            vmax=vmax,
-            origin="lower",
-            extent=[0, datalen / fs, 0, fs / 2],
-            interpolation="bicubic",
+        figsize = (10 if horizontal else 6 * num, 5 * num if horizontal else 6)
+        fig, a = (
+            pyplot.subplots(num, 1, figsize=figsize)
+            if horizontal
+            else pyplot.subplots(1, num, figsize=figsize)
         )
-        pyplot.colorbar()
+        fig.subplots_adjust(top=0.85)
+        rect = fig.patch
+        rect.set_facecolor("#f0f0f0")
+
+        for i in range(len(data)):
+            im = []
+            _data = numpy.array(data[i])
+            datalen = len(_data)
+            segments = datalen // segmentsize - 1
+            window = signal.hann(segmentsize * overlap)
+
+            numpy.seterr(all="ignore")
+
+            for segment in range(segments - overlap):
+                r = range(
+                    segment * datalen // segments,
+                    segment * datalen // segments + segmentsize * overlap,
+                )
+                subdata = _data[r]
+                subdata = subdata * window
+                n = len(subdata)
+                Y = numpy.fft.fft(subdata) / n
+                Y = Y[range(len(Y) // 2)]
+                Yfreq = 20 * numpy.log10(numpy.absolute(Y))
+                im.append(Yfreq)
+
+            if len(im) == 0:
+                print(
+                    "Size of the segment provided is likely too big for the spectrogram to be correctly plotted."
+                )
+                return
+
+            im = numpy.transpose(im)
+
+            _a = a[i] if num != 1 else a
+
+            _im = _a.imshow(
+                im,
+                aspect="auto",
+                vmin=vmin,
+                vmax=vmax,
+                origin="lower",
+                extent=[0, datalen / fs, 0, fs / 2],
+                interpolation="bicubic",
+            )
+            _a.set_title(labels[i])
+            _a.set_xlabel("Time [sec]")
+            _a.set_ylabel("Frequency [Hz]")
+            pyplot.colorbar(_im, ax=_a)
+
+        pyplot.tight_layout(rect=[0, 0.0, 1, 0.94])
 
         if not file:
             pyplot.show()
@@ -89,7 +121,6 @@ class DspPlotter:
         labels: tuple,
         fs: int,
         horizontal: bool = True,
-        normalize: bool = False,
         freqresp: bool = True,
         normalized_freq: bool = False,
         padwidth: int = 1024,
@@ -103,6 +134,12 @@ class DspPlotter:
         file: str = None,
     ) -> None:
         if isinstance(data, (list, tuple, numpy.ndarray)):
+            if len(data) == 0:
+                print(
+                    "No data is likely provided for the graph(-s) to be correctly plotted."
+                )
+                return
+
             num = 1 + freqresp + phaseresp
             figsize = (10 if horizontal else 6 * num, 5 * num if horizontal else 6)
             fig, a = (
@@ -117,17 +154,11 @@ class DspPlotter:
 
             n = len(data[0])
 
-            if normalize:
-                for i in range(len(data)):
-                    maxitem = max(abs(numpy.max(data[i])), abs(numpy.min(data[i])))
-                    if maxitem > 0:
-                        data[i] /= maxitem
-
             dataplot = a[0] if freqresp or phaseresp else a
             x = numpy.arange(0, n / fs, 1 / fs)
             for i in range(len(data)):
                 dataplot.plot(x, data[i], label=labels[i], linewidth=0.75)
-            dataplot.set_xlabel("Time [s]")
+            dataplot.set_xlabel("Time [sec]")
             dataplot.set_ylabel("Amplitude [mV]")
             dataplot.grid(True, **grid_style)
             dataplot.set_autoscalex_on(False)
