@@ -1,8 +1,6 @@
 from __future__ import division
 
 import numpy
-import matplotlib
-import wave
 
 from scipy import signal
 from matplotlib import pyplot
@@ -37,7 +35,7 @@ class DspPlotter:
         data: tuple,
         labels: tuple,
         fs: int,
-        horizontal: bool = True,
+        horizontal: bool = False,
         segmentsize: int = 64,
         overlap: int = 8,
         vmin: int = -160,
@@ -81,7 +79,7 @@ class DspPlotter:
                 n = len(subdata)
                 Y = numpy.fft.fft(subdata) / n
                 Y = Y[range(len(Y) // 2)]
-                Yfreq = 20 * numpy.log10(numpy.absolute(Y))
+                Yfreq = 20 * numpy.log10(numpy.abs(Y))
                 im.append(Yfreq)
 
             if len(im) == 0:
@@ -94,6 +92,10 @@ class DspPlotter:
 
             _a = a[i] if num != 1 else a
 
+            _a.set_title(labels[i])
+            _a.set_xlabel("Time [sec]")
+            _a.set_ylabel("Frequency [Hz]")
+
             _im = _a.imshow(
                 im,
                 aspect="auto",
@@ -103,14 +105,12 @@ class DspPlotter:
                 extent=[0, datalen / fs, 0, fs / 2],
                 interpolation="bicubic",
             )
-            _a.set_title(labels[i])
-            _a.set_xlabel("Time [sec]")
-            _a.set_ylabel("Frequency [Hz]")
+
             pyplot.colorbar(_im, ax=_a)
 
         pyplot.tight_layout(rect=[0, 0.0, 1, 0.94])
 
-        if not file:
+        if file is None:
             pyplot.show()
         else:
             pyplot.savefig(file)
@@ -122,13 +122,12 @@ class DspPlotter:
         fs: int,
         horizontal: bool = True,
         freqresp: bool = True,
-        normalized_freq: bool = False,
         padwidth: int = 1024,
-        log_freq: bool = False,
         div_by_N: bool = False,
-        freqticks: list = [],
-        freq_lim=None,
-        freq_dB_lim=None,
+        normalized_freq: bool = False,
+        log_freq: bool = False,
+        freq_lim: tuple = None,
+        freq_dB_lim: tuple = None,
         phaseresp: bool = False,
         phasearg=None,
         file: str = None,
@@ -152,17 +151,25 @@ class DspPlotter:
             rect.set_facecolor("#f0f0f0")
             grid_style = {"color": "#777777"}
 
+            dataplot = a[0] if freqresp or phaseresp else a
+
             n = len(data[0])
 
-            dataplot = a[0] if freqresp or phaseresp else a
-            x = numpy.arange(0, n / fs, 1 / fs)
-            for i in range(len(data)):
-                dataplot.plot(x, data[i], label=labels[i], linewidth=0.75)
-            dataplot.set_xlabel("Time [sec]")
+            dataplot.set_xlabel("Time [sec]" if div_by_N else "Samples")
             dataplot.set_ylabel("Amplitude [mV]")
             dataplot.grid(True, **grid_style)
             dataplot.set_autoscalex_on(False)
-            dataplot.set_xlim([0, n / fs])
+            dataplot.set_xlim([0, n / fs if div_by_N else n])
+
+            X = (
+                numpy.arange(0, n / fs, 1 / fs)
+                if div_by_N
+                else numpy.linspace(0, n, n, False)
+            )
+
+            for i in range(len(data)):
+                dataplot.plot(X, data[i], label=labels[i], linewidth=0.75)
+
             dataplot.legend(loc="best", shadow=True)
 
             numpy.seterr(all="ignore")
@@ -174,54 +181,55 @@ class DspPlotter:
                         data[0], (0, padwidth - n), "constant", constant_values=(0, 0)
                     )
                 )
-                Y = Y[range(padwidth // 2)]
                 if div_by_N:
                     Y = Y / n
-                Yfreq = 20 * numpy.log10(numpy.abs(Y))
-                Yfreq = numpy.fmax(-300, Yfreq)
-
-                freq_label = [
-                    r"Normalized Frequency ($\times \pi$ rad/sample)",
-                    "Frequency (Hz)",
-                ]
+                Y = Y[range(padwidth // 2)]
 
                 def set_freq(a):
                     if normalized_freq:
-                        a.set_xlabel(freq_label[0])
-                        X = numpy.linspace(0, 1, len(Y), False)
+                        a.set_xlabel(r"Normalized Frequency ($\times \pi$ rad/sample)")
                         if log_freq:
                             a.set_xscale("log")
                             a.set_xlim([0.01, 1])
                         else:
                             a.set_xlim([0, 1])
+                        X = numpy.linspace(0, 1, len(Y), False)
                     else:
-                        a.set_xlabel(freq_label[1])
+                        a.set_xlabel("Frequency (Hz)")
                         if log_freq:
                             a.set_xscale("log")
-
                             a.set_xticks(list(self.__gen_ticks(fs / 2)))
                             a.set_xticklabels(list(self.__gen_tick_labels(fs / 2)))
-                        X = numpy.linspace(0, fs / 2, len(Y), False)
                         if freq_lim is not None:
                             a.set_xlim(freq_lim)
                         else:
                             a.set_xlim([10, fs / 2])
-                        a.set_xticks(list(a.get_xticks()) + freqticks)
+                        X = numpy.linspace(0, fs / 2, len(Y), False)
                     return X
 
                 if freqresp:
                     freqplot = a[1]
+                    freqplot.set_ylabel("Amplitude (dB)")
                     if freq_dB_lim is not None:
                         freqplot.set_ylim(freq_dB_lim)
-                    X = set_freq(freqplot)
-                    freqplot.set_ylabel("Gain (dB)")
                     freqplot.grid(True, **grid_style)
                     freqplot.set_autoscalex_on(False)
+                    X = set_freq(freqplot)
+                    Yfreq = 20 * numpy.log10(numpy.abs(Y))
                     freqplot.plot(X, Yfreq, label=labels[0], linewidth=0.75)
                     freqplot.legend(loc="best", shadow=True)
 
                 if phaseresp:
                     phaseplot = a[1 + freqresp]
+                    phaseplot.set_ylabel(
+                        r"Phase (${\circ}$)"
+                        if phasearg is None
+                        else r"Phase shift (${\circ}$)"
+                    )
+                    phaseplot.set_autoscaley_on(False)
+                    phaseplot.set_ylim([-190, +190])
+                    phaseplot.grid(True, **grid_style)
+                    X = set_freq(phaseplot)
                     if phasearg is not None:
                         if phasearg == "auto":
                             phasearg = (n - 1) * 0.5
@@ -230,21 +238,12 @@ class DspPlotter:
                         )
                     Yphase = numpy.angle(Y, deg=True)
                     Yphase = numpy.select([Yphase < -179, True], [Yphase + 360, Yphase])
-                    X = set_freq(phaseplot)
-                    phaseplot.grid(True, **grid_style)
-                    phaseplot.set_ylabel(
-                        r"Phase (${\circ}$)"
-                        if phasearg is None
-                        else r"Phase shift (${\circ}$)"
-                    )
-                    phaseplot.set_autoscaley_on(False)
-                    phaseplot.set_ylim([-190, +190])
                     phaseplot.plot(X, Yphase, label=labels[0], linewidth=0.75)
                     phaseplot.legend(loc="best", shadow=True)
 
             pyplot.tight_layout(rect=[0, 0.0, 1, 0.94])
 
-            if not file:
+            if file is None:
                 pyplot.show()
             else:
                 pyplot.savefig(file)

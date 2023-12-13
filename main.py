@@ -27,14 +27,20 @@ def main() -> None:
 
     labels = ("MLII", "V1")
     dsp_plotter = DspPlotter()
-    dsp_plotter.plot(data=data, labels=labels, fs=fs, freqresp=False)
+    dsp_plotter.plot(
+        data=data,
+        labels=labels,
+        fs=fs,
+        div_by_N=True,
+        freq_lim=[0, fs / 2],
+        phaseresp=True,
+    )
 
     if is_spectrogram:
         dsp_plotter.spectrogram(
             data=data,
             labels=labels,
             fs=fs,
-            horizontal=False,
             segmentsize=8,
         )
 
