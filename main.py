@@ -32,7 +32,7 @@ def main() -> None:
         labels=labels,
         fs=fs,
         div_by_N=True,
-        freq_lim=[0, fs / 2],
+        freq_lim=(0, fs / 2),
         phaseresp=True,
     )
 

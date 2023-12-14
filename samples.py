@@ -32,7 +32,7 @@ class Samples:
     def write_wave_file(self) -> bool:
         if len(self.__mlii) == 0 and len(self.__v1) == 0:
             return False
-        audio = numpy.array([self.__mlii, self.__v1]).T
+        audio = numpy.array([self.__v1, self.__mlii]).T
         audio = (audio * (2**15 - 1)).astype("<h")
         with wave.open(
             os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav"), "w"

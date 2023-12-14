@@ -35,7 +35,6 @@ class DspPlotter:
         data: tuple,
         labels: tuple,
         fs: int,
-        horizontal: bool = False,
         segmentsize: int = 64,
         overlap: int = 8,
         vmin: int = -160,
@@ -50,13 +49,7 @@ class DspPlotter:
             )
             return
 
-        figsize = (10 if horizontal else 6 * num, 5 * num if horizontal else 6)
-        fig, a = (
-            pyplot.subplots(num, 1, figsize=figsize)
-            if horizontal
-            else pyplot.subplots(1, num, figsize=figsize)
-        )
-        fig.subplots_adjust(top=0.85)
+        fig, a = pyplot.subplots(1, num)
         rect = fig.patch
         rect.set_facecolor("#f0f0f0")
 
@@ -108,7 +101,7 @@ class DspPlotter:
 
             pyplot.colorbar(_im, ax=_a)
 
-        pyplot.tight_layout(rect=[0, 0.0, 1, 0.94])
+        pyplot.tight_layout(rect=[0, 0.0, 1, 1.0])
 
         if file is None:
             pyplot.show()
@@ -120,7 +113,6 @@ class DspPlotter:
         data: tuple,
         labels: tuple,
         fs: int,
-        horizontal: bool = True,
         freqresp: bool = True,
         padwidth: int = 1024,
         div_by_N: bool = False,
@@ -140,13 +132,7 @@ class DspPlotter:
                 return
 
             num = 1 + freqresp + phaseresp
-            figsize = (10 if horizontal else 6 * num, 5 * num if horizontal else 6)
-            fig, a = (
-                pyplot.subplots(num, 1, figsize=figsize)
-                if horizontal
-                else pyplot.subplots(1, num, figsize=figsize)
-            )
-            fig.subplots_adjust(top=0.85)
+            fig, a = pyplot.subplots(num, 1, figsize=(10, 2.25 * num))
             rect = fig.patch
             rect.set_facecolor("#f0f0f0")
             grid_style = {"color": "#777777"}
@@ -175,15 +161,6 @@ class DspPlotter:
             numpy.seterr(all="ignore")
 
             if freqresp or phaseresp:
-                padwidth = max(padwidth, n)
-                Y = numpy.fft.fft(
-                    numpy.pad(
-                        data[0], (0, padwidth - n), "constant", constant_values=(0, 0)
-                    )
-                )
-                if div_by_N:
-                    Y = Y / n
-                Y = Y[range(padwidth // 2)]
 
                 def set_freq(a):
                     if normalized_freq:
@@ -193,7 +170,7 @@ class DspPlotter:
                             a.set_xlim([0.01, 1])
                         else:
                             a.set_xlim([0, 1])
-                        X = numpy.linspace(0, 1, len(Y), False)
+                        X = numpy.linspace(0, 1, padwidth // 2, False)
                     else:
                         a.set_xlabel("Frequency (Hz)")
                         if log_freq:
@@ -204,13 +181,25 @@ class DspPlotter:
                             a.set_xlim(freq_lim)
                         else:
                             a.set_xlim([10, fs / 2])
-                        X = numpy.linspace(0, fs / 2, len(Y), False)
+                        X = numpy.linspace(0, fs / 2, padwidth // 2, False)
                     return X
+
+                padwidth = max(padwidth, n)
+
+                Y = numpy.fft.fft(
+                    numpy.pad(
+                        data[0], (0, padwidth - n), "constant", constant_values=(0, 0)
+                    )
+                )
+                if div_by_N:
+                    Y = Y / n
+                Y = Y[range(padwidth // 2)]
 
                 if freqresp:
                     freqplot = a[1]
                     freqplot.set_ylabel("Amplitude (dB)")
                     if freq_dB_lim is not None:
+                        freqplot.set_autoscaley_on(False)
                         freqplot.set_ylim(freq_dB_lim)
                     freqplot.grid(True, **grid_style)
                     freqplot.set_autoscalex_on(False)
@@ -229,6 +218,7 @@ class DspPlotter:
                     phaseplot.set_autoscaley_on(False)
                     phaseplot.set_ylim([-190, +190])
                     phaseplot.grid(True, **grid_style)
+                    phaseplot.set_autoscalex_on(False)
                     X = set_freq(phaseplot)
                     if phasearg is not None:
                         if phasearg == "auto":
@@ -241,7 +231,7 @@ class DspPlotter:
                     phaseplot.plot(X, Yphase, label=labels[0], linewidth=0.75)
                     phaseplot.legend(loc="best", shadow=True)
 
-            pyplot.tight_layout(rect=[0, 0.0, 1, 0.94])
+            pyplot.tight_layout(rect=[0, 0.0, 1, 0.98])
 
             if file is None:
                 pyplot.show()
