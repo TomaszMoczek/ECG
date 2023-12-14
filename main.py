@@ -27,6 +27,7 @@ def main() -> None:
 
     labels = ("MLII", "V1")
     dsp_plotter = DspPlotter()
+
     dsp_plotter.plot(
         data=data,
         labels=labels,
