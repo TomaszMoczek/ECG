@@ -91,8 +91,8 @@ class DspPlotter:
             _a = a[i] if num != 1 else a
 
             _a.set_title(labels[i])
-            _a.set_xlabel("Time [sec]")
-            _a.set_ylabel("Frequency [Hz]")
+            _a.set_xlabel("Time (sec)")
+            _a.set_ylabel("Frequency (Hz)")
 
             _im = _a.imshow(
                 im,
@@ -146,8 +146,8 @@ class DspPlotter:
 
         dataplot = a[0] if freqresp or phaseresp else a
 
-        dataplot.set_xlabel("Time [sec]" if div_by_N else "Samples")
-        dataplot.set_ylabel("Amplitude [mV]")
+        dataplot.set_xlabel("Time (sec)" if div_by_N else "Samples")
+        dataplot.set_ylabel("Amplitude (mV)" if div_by_N else "Amplitude")
         dataplot.grid(True, **grid_style)
         dataplot.set_autoscalex_on(False)
         dataplot.set_xlim([0, n / fs if div_by_N else n])
@@ -196,7 +196,7 @@ class DspPlotter:
 
             if freqresp:
                 freqplot = a[1]
-                freqplot.set_ylabel("Amplitude (dB)")
+                freqplot.set_ylabel("Magnitude (dB)")
                 if freq_dB_lim is not None:
                     freqplot.set_autoscaley_on(False)
                     freqplot.set_ylim(freq_dB_lim)
