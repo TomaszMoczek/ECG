@@ -50,17 +50,23 @@ class DspPlotter:
             return
 
         fig, a = pyplot.subplots(1, num)
-        rect = fig.patch
-        rect.set_facecolor("#f0f0f0")
+        fig.patch.set_facecolor("#f0f0f0")
+
+        datalen = len(data[0])
+        segments = datalen // segmentsize - 1
+        window = signal.hann(segmentsize * overlap)
+
+        numpy.seterr(all="ignore")
 
         for i in range(len(data)):
             im = []
             _data = numpy.array(data[i])
-            datalen = len(_data)
-            segments = datalen // segmentsize - 1
-            window = signal.hann(segmentsize * overlap)
 
-            numpy.seterr(all="ignore")
+            if len(_data) != datalen:
+                print(
+                    "Lengths of particular items of data are likely different for the spectrogram to be correctly plotted."
+                )
+                return
 
             for segment in range(segments - overlap):
                 r = range(
@@ -69,8 +75,7 @@ class DspPlotter:
                 )
                 subdata = _data[r]
                 subdata = subdata * window
-                n = len(subdata)
-                Y = numpy.fft.fft(subdata) / n
+                Y = numpy.fft.fft(subdata) / len(subdata)
                 Y = Y[range(len(Y) // 2)]
                 Yfreq = 20 * numpy.log10(numpy.abs(Y))
                 im.append(Yfreq)
@@ -124,71 +129,98 @@ class DspPlotter:
         phasearg=None,
         file: str = None,
     ) -> None:
-        if isinstance(data, (list, tuple, numpy.ndarray)):
-            if len(data) == 0:
+        if len(data) == 0:
+            print(
+                "No data is likely provided for the graph(-s) to be correctly plotted."
+            )
+            return
+
+        num = 1 + freqresp + phaseresp
+        fig, a = pyplot.subplots(num, 1, figsize=(10, 2.25 * num))
+        fig.patch.set_facecolor("#f0f0f0")
+        grid_style = {"color": "#777777"}
+
+        n = len(data[0])
+
+        numpy.seterr(all="ignore")
+
+        dataplot = a[0] if freqresp or phaseresp else a
+
+        dataplot.set_xlabel("Time [sec]" if div_by_N else "Samples")
+        dataplot.set_ylabel("Amplitude [mV]")
+        dataplot.grid(True, **grid_style)
+        dataplot.set_autoscalex_on(False)
+        dataplot.set_xlim([0, n / fs if div_by_N else n])
+
+        X = (
+            numpy.arange(0, n / fs, 1 / fs)
+            if div_by_N
+            else numpy.linspace(0, n, n, False)
+        )
+
+        for i in range(len(data)):
+            if len(data[i]) != n:
                 print(
-                    "No data is likely provided for the graph(-s) to be correctly plotted."
+                    "Lengths of particular items of data are likely different for the graph(-s) to be correctly plotted."
                 )
                 return
+            dataplot.plot(X, data[i], label=labels[i], linewidth=0.75)
 
-            num = 1 + freqresp + phaseresp
-            fig, a = pyplot.subplots(num, 1, figsize=(10, 2.25 * num))
-            rect = fig.patch
-            rect.set_facecolor("#f0f0f0")
-            grid_style = {"color": "#777777"}
+        dataplot.legend(loc="best", shadow=True)
 
-            dataplot = a[0] if freqresp or phaseresp else a
+        if freqresp or phaseresp:
 
-            n = len(data[0])
+            def set_freq(a):
+                if normalized_freq:
+                    a.set_xlabel(r"Normalized Frequency ($\times \pi$ rad/sample)")
+                    if log_freq:
+                        a.set_xscale("log")
+                        a.set_xlim([0.01, 1])
+                    else:
+                        a.set_xlim([0, 1])
+                    X = numpy.linspace(0, 1, padwidth // 2, False)
+                else:
+                    a.set_xlabel("Frequency (Hz)")
+                    if log_freq:
+                        a.set_xscale("log")
+                        a.set_xticks(list(self.__gen_ticks(fs / 2)))
+                        a.set_xticklabels(list(self.__gen_tick_labels(fs / 2)))
+                    if freq_lim is not None:
+                        a.set_xlim(freq_lim)
+                    else:
+                        a.set_xlim([10, fs / 2])
+                    X = numpy.linspace(0, fs / 2, padwidth // 2, False)
+                return X
 
-            dataplot.set_xlabel("Time [sec]" if div_by_N else "Samples")
-            dataplot.set_ylabel("Amplitude [mV]")
-            dataplot.grid(True, **grid_style)
-            dataplot.set_autoscalex_on(False)
-            dataplot.set_xlim([0, n / fs if div_by_N else n])
+            padwidth = max(padwidth, n)
 
-            X = (
-                numpy.arange(0, n / fs, 1 / fs)
-                if div_by_N
-                else numpy.linspace(0, n, n, False)
-            )
+            if freqresp:
+                freqplot = a[1]
+                freqplot.set_ylabel("Amplitude (dB)")
+                if freq_dB_lim is not None:
+                    freqplot.set_autoscaley_on(False)
+                    freqplot.set_ylim(freq_dB_lim)
+                freqplot.grid(True, **grid_style)
+                freqplot.set_autoscalex_on(False)
+                X = set_freq(freqplot)
+
+            if phaseresp:
+                phaseplot = a[1 + freqresp]
+                phaseplot.set_ylabel(
+                    r"Phase (${\circ}$)"
+                    if phasearg is None
+                    else r"Phase shift (${\circ}$)"
+                )
+                phaseplot.set_autoscaley_on(False)
+                phaseplot.set_ylim([-190, +190])
+                phaseplot.grid(True, **grid_style)
+                phaseplot.set_autoscalex_on(False)
+                X = set_freq(phaseplot)
 
             for i in range(len(data)):
-                dataplot.plot(X, data[i], label=labels[i], linewidth=0.75)
-
-            dataplot.legend(loc="best", shadow=True)
-
-            numpy.seterr(all="ignore")
-
-            if freqresp or phaseresp:
-
-                def set_freq(a):
-                    if normalized_freq:
-                        a.set_xlabel(r"Normalized Frequency ($\times \pi$ rad/sample)")
-                        if log_freq:
-                            a.set_xscale("log")
-                            a.set_xlim([0.01, 1])
-                        else:
-                            a.set_xlim([0, 1])
-                        X = numpy.linspace(0, 1, padwidth // 2, False)
-                    else:
-                        a.set_xlabel("Frequency (Hz)")
-                        if log_freq:
-                            a.set_xscale("log")
-                            a.set_xticks(list(self.__gen_ticks(fs / 2)))
-                            a.set_xticklabels(list(self.__gen_tick_labels(fs / 2)))
-                        if freq_lim is not None:
-                            a.set_xlim(freq_lim)
-                        else:
-                            a.set_xlim([10, fs / 2])
-                        X = numpy.linspace(0, fs / 2, padwidth // 2, False)
-                    return X
-
-                padwidth = max(padwidth, n)
-
                 Y = numpy.fft.fft(
                     numpy.pad(
-                        data[0], (0, padwidth - n), "constant", constant_values=(0, 0)
+                        data[i], (0, padwidth - n), "constant", constant_values=(0, 0)
                     )
                 )
                 if div_by_N:
@@ -196,30 +228,10 @@ class DspPlotter:
                 Y = Y[range(padwidth // 2)]
 
                 if freqresp:
-                    freqplot = a[1]
-                    freqplot.set_ylabel("Amplitude (dB)")
-                    if freq_dB_lim is not None:
-                        freqplot.set_autoscaley_on(False)
-                        freqplot.set_ylim(freq_dB_lim)
-                    freqplot.grid(True, **grid_style)
-                    freqplot.set_autoscalex_on(False)
-                    X = set_freq(freqplot)
                     Yfreq = 20 * numpy.log10(numpy.abs(Y))
-                    freqplot.plot(X, Yfreq, label=labels[0], linewidth=0.75)
-                    freqplot.legend(loc="best", shadow=True)
+                    freqplot.plot(X, Yfreq, label=labels[i], linewidth=0.75)
 
                 if phaseresp:
-                    phaseplot = a[1 + freqresp]
-                    phaseplot.set_ylabel(
-                        r"Phase (${\circ}$)"
-                        if phasearg is None
-                        else r"Phase shift (${\circ}$)"
-                    )
-                    phaseplot.set_autoscaley_on(False)
-                    phaseplot.set_ylim([-190, +190])
-                    phaseplot.grid(True, **grid_style)
-                    phaseplot.set_autoscalex_on(False)
-                    X = set_freq(phaseplot)
                     if phasearg is not None:
                         if phasearg == "auto":
                             phasearg = (n - 1) * 0.5
@@ -228,12 +240,17 @@ class DspPlotter:
                         )
                     Yphase = numpy.angle(Y, deg=True)
                     Yphase = numpy.select([Yphase < -179, True], [Yphase + 360, Yphase])
-                    phaseplot.plot(X, Yphase, label=labels[0], linewidth=0.75)
-                    phaseplot.legend(loc="best", shadow=True)
+                    phaseplot.plot(X, Yphase, label=labels[i], linewidth=0.75)
 
-            pyplot.tight_layout(rect=[0, 0.0, 1, 0.98])
+            if freqresp:
+                freqplot.legend(loc="best", shadow=True)
 
-            if file is None:
-                pyplot.show()
-            else:
-                pyplot.savefig(file)
+            if phaseresp:
+                phaseplot.legend(loc="best", shadow=True)
+
+        pyplot.tight_layout(rect=[0, 0.0, 1, 0.98])
+
+        if file is None:
+            pyplot.show()
+        else:
+            pyplot.savefig(file)

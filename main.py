@@ -29,12 +29,7 @@ def main() -> None:
     dsp_plotter = DspPlotter()
 
     dsp_plotter.plot(
-        data=data,
-        labels=labels,
-        fs=fs,
-        div_by_N=True,
-        freq_lim=(0, fs / 2),
-        phaseresp=True,
+        data=data, labels=labels, fs=fs, div_by_N=True, freq_lim=(0, fs / 2)
     )
 
     if is_spectrogram:
