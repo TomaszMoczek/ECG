@@ -13,20 +13,20 @@ class Samples:
         return self.__fs
 
     def get_data(self) -> tuple:
-        index = -1
-        self.__mlii.clear()
-        self.__v1.clear()
-        with open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.csv"), "r"
-        ) as file:
-            lines = file.readlines()
-        for line in lines:
-            index += 1
-            if index <= 1:
-                continue
-            items = line.rstrip("\n").split(",")
-            self.__mlii.append(float(items[1]))
-            self.__v1.append(float(items[2]))
+        if len(self.__mlii) == 0 and len(self.__v1) == 0:
+            index = -1
+            with open(
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.csv"),
+                "r",
+            ) as file:
+                lines = file.readlines()
+            for line in lines:
+                index += 1
+                if index <= 1:
+                    continue
+                items = line.rstrip("\n").split(",")
+                self.__mlii.append(float(items[1]))
+                self.__v1.append(float(items[2]))
         return self.__mlii, self.__v1
 
     def write_wave_file(self) -> bool:
