@@ -22,8 +22,6 @@ def main() -> None:
     labels = ("MLII", "V1")
 
     if is_signal:
-        dsp_plotter = DspPlotter()
-
         if is_sound:
             pygame.mixer.init(frequency=fs)
             samples.write_wave_file()
@@ -31,6 +29,8 @@ def main() -> None:
                 os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav")
             )
             pygame.mixer.music.play(loops=-1)
+
+        dsp_plotter = DspPlotter()
 
         dsp_plotter.plot(
             data=data,
