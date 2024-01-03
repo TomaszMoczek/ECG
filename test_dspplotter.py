@@ -4,6 +4,7 @@ from samples import Samples
 from dspplotter import DspPlotter
 
 samples = Samples()
+dsp_plotter = DspPlotter()
 
 fs = samples.get_fs()
 data = samples.get_data()
@@ -12,7 +13,6 @@ labels = ("MLII", "V1")
 
 
 def test_plot():
-    dsp_plotter = DspPlotter()
     file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plot.svg")
     if os.path.exists(file):
         os.remove(file)
@@ -29,7 +29,6 @@ def test_plot():
 
 
 def test_spectrogram():
-    dsp_plotter = DspPlotter()
     file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "spectrogram.svg")
     if os.path.exists(file):
         os.remove(file)

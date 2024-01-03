@@ -15,6 +15,7 @@ def main() -> None:
     is_spectrogram = config.getboolean("default", "spectrogram")
 
     samples = Samples()
+    dsp_plotter = DspPlotter()
 
     fs = samples.get_fs()
     data = samples.get_data()
@@ -22,15 +23,14 @@ def main() -> None:
     labels = ("MLII", "V1")
 
     if is_signal:
+        samples.write_wave_file()
+
         if is_sound:
             pygame.mixer.init(frequency=fs)
-            samples.write_wave_file()
             pygame.mixer.music.load(
                 os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav")
             )
             pygame.mixer.music.play(loops=-1)
-
-        dsp_plotter = DspPlotter()
 
         dsp_plotter.plot(
             data=data,
