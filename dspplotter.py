@@ -204,7 +204,7 @@ class DspPlotter:
                     )
                 )
                 if div_by_N:
-                    Y = Y / N
+                    Y = Y / padwidth
                 Y = Y[range(padwidth // 2)]
 
                 if freqresp:
@@ -215,7 +215,7 @@ class DspPlotter:
                 if phaseresp:
                     if phasearg is not None:
                         if phasearg == "auto":
-                            phasearg = (N - 1) * 0.5
+                            phasearg = (padwidth - 1) * 0.5
                         Y = Y / 1j ** numpy.linspace(
                             0, -(phasearg * 2), len(Y), endpoint=False
                         )
