@@ -18,11 +18,11 @@ def test_plot():
         os.remove(file)
     assert os.path.exists(file) == False
     dsp_plotter.plot(
+        fs=fs,
         data=data,
         labels=labels,
-        fs=fs,
         div_by_N=True,
-        freq_lim=(0, fs / 2),
+        log_freq=True,
         file=file,
     )
     assert os.path.exists(file) == True
@@ -34,10 +34,12 @@ def test_spectrogram():
         os.remove(file)
     assert os.path.exists(file) == False
     dsp_plotter.spectrogram(
+        fs=fs,
         data=data,
         labels=labels,
-        fs=fs,
         segmentsize=8,
+        log_freq=True,
+        vmin=-130,
         file=file,
     )
     assert os.path.exists(file) == True

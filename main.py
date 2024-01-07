@@ -33,19 +33,21 @@ def main() -> None:
             pygame.mixer.music.play(loops=-1)
 
         dsp_plotter.plot(
+            fs=fs,
             data=data,
             labels=labels,
-            fs=fs,
             div_by_N=True,
-            freq_lim=(0, fs / 2),
+            log_freq=True,
         )
 
         if is_spectrogram:
             dsp_plotter.spectrogram(
+                fs=fs,
                 data=data,
                 labels=labels,
-                fs=fs,
                 segmentsize=8,
+                log_freq=True,
+                vmin=-130,
             )
 
         if is_sound:
