@@ -38,6 +38,7 @@ def main() -> None:
             labels=labels,
             div_by_N=True,
             log_freq=True,
+            block=False,
         )
 
         if is_spectrogram:

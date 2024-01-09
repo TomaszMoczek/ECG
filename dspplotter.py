@@ -20,6 +20,7 @@ class DspPlotter:
         log_freq: bool = False,
         vmin: int = -160,
         vmax: int = 0,
+        block: bool = True,
         file: str = None,
     ) -> None:
         num = len(data)
@@ -96,7 +97,7 @@ class DspPlotter:
         pyplot.tight_layout(rect=(0.0, 0.0, 1.0, 1.0))
 
         if file is None:
-            pyplot.show()
+            pyplot.show(block=block)
         else:
             pyplot.savefig(file)
 
@@ -114,6 +115,7 @@ class DspPlotter:
         freq_dB_lim: tuple = None,
         phaseresp: bool = False,
         phasearg=None,
+        block: bool = True,
         file: str = None,
     ) -> None:
         if len(data) == 0:
@@ -232,6 +234,6 @@ class DspPlotter:
         pyplot.tight_layout(rect=(0, 0.0, 1, 0.98))
 
         if file is None:
-            pyplot.show()
+            pyplot.show(block=block)
         else:
             pyplot.savefig(file)
