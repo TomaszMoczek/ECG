@@ -20,9 +20,8 @@ def main() -> None:
     fs = samples.get_fs()
     data = samples.get_data()
 
-    labels = ("MLII", "V1")
-
     if is_signal:
+        labels = ("MLII", "V1")
         samples.write_wave_file()
 
         if is_sound:
@@ -38,7 +37,7 @@ def main() -> None:
             labels=labels,
             div_by_N=True,
             log_freq=True,
-            block=False,
+            block=False if is_spectrogram else True,
         )
 
         if is_spectrogram:
