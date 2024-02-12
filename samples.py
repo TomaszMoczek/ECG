@@ -29,16 +29,19 @@ class Samples:
                 self.__v1.append(float(items[2]))
         return self.__mlii, self.__v1
 
-    def write_wave_file(self) -> bool:
-        if len(self.__mlii) == 0 and len(self.__v1) == 0:
+    def write_wave_file(fs: int, data: tuple, file_path: str) -> bool:
+        if (
+            len(data) != 2
+            or len(data[0]) == 0
+            or len(data[1]) == 0
+            or len(data[0]) != len(data[1])
+        ):
             return False
-        audio = numpy.array([self.__v1, self.__mlii]).T
+        audio = numpy.array([data[1], data[0]]).T
         audio = (audio * (2**15 - 1)).astype("<h")
-        with wave.open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav"), "w"
-        ) as file:
+        with wave.open(file_path, "w") as file:
             file.setnchannels(2)
             file.setsampwidth(2)
-            file.setframerate(self.__fs)
+            file.setframerate(fs)
             file.writeframes(audio.tobytes())
         return True
