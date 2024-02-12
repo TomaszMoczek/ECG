@@ -12,7 +12,7 @@ data = samples.get_data()
 labels = ("MLII", "V1")
 
 
-def test_plot():
+def test_plot() -> None:
     file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plot.svg")
     if os.path.exists(file):
         os.remove(file)
@@ -28,7 +28,7 @@ def test_plot():
     assert os.path.exists(file) == True
 
 
-def test_spectrogram():
+def test_spectrogram() -> None:
     file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "spectrogram.svg")
     if os.path.exists(file):
         os.remove(file)

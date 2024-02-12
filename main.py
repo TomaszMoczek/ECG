@@ -7,29 +7,22 @@ from samples import Samples
 from dspplotter import DspPlotter
 
 
-def main() -> None:
-    config = configparser.ConfigParser()
-    config.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"))
-    is_signal = config.getboolean("default", "signal")
-    is_sound = config.getboolean("default", "sound")
-    is_spectrogram = config.getboolean("default", "spectrogram")
-
-    samples = Samples()
-    dsp_plotter = DspPlotter()
-
-    fs = samples.get_fs()
-    data = samples.get_data()
+def plot_signal(fs: int, data: tuple, labels: tuple, file_name: str) -> None:
+    global is_signal
+    global is_sound
+    global is_spectrogram
 
     if is_signal:
-        labels = ("MLII", "V1")
-        samples.write_wave_file()
+        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
+
+        Samples.write_wave_file(fs=fs, data=data, file_path=file_path)
 
         if is_sound:
             pygame.mixer.init(frequency=fs)
-            pygame.mixer.music.load(
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav")
-            )
+            pygame.mixer.music.load(filename=file_path)
             pygame.mixer.music.play(loops=-1)
+
+        dsp_plotter = DspPlotter()
 
         dsp_plotter.plot(
             fs=fs,
@@ -55,5 +48,20 @@ def main() -> None:
             pygame.mixer.music.unload()
 
 
+def main() -> None:
+    samples = Samples()
+
+    fs = samples.get_fs()
+    data = samples.get_data()
+
+    plot_signal(fs=fs, data=data, labels=("MLII", "V1"), file_name="samples.wav")
+
+
 if __name__ == "__main__":
+    config = configparser.ConfigParser()
+    config.read(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini"))
+    is_signal = config.getboolean("default", "signal")
+    is_sound = config.getboolean("default", "sound")
+    is_spectrogram = config.getboolean("default", "spectrogram")
+
     main()

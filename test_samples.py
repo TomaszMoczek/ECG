@@ -8,15 +8,15 @@ fs = samples.get_fs()
 data = samples.get_data()
 
 
-def test_get_fs():
+def test_get_fs() -> None:
     assert fs == 360
 
 
-def test_get_data():
+def test_get_data() -> None:
     assert len(data[0]) == 3600 and len(data[1]) == 3600
 
 
-def test_write_wave_file_false():
+def test_write_wave_file_false() -> None:
     mlii = []
     v1 = []
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav")
@@ -29,6 +29,6 @@ def test_write_wave_file_false():
     assert Samples.write_wave_file(fs=fs, data=(mlii, v1), file_path=file_path) == False
 
 
-def test_write_wave_file_true():
+def test_write_wave_file_true() -> None:
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav")
     assert Samples.write_wave_file(fs=fs, data=data, file_path=file_path) == True
