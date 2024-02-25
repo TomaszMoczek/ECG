@@ -66,7 +66,7 @@ def main() -> None:
         plot_signal(
             fs=fs,
             data=(numpy.ndarray.tolist(mlii), numpy.ndarray.tolist(v1)),
-            labels=("wiener(MLII)", "wiener(V1)"),
+            labels=("MLII [Wiener filtered]", "V1 [Wiener filtered]"),
             file_name="samples-wiener.wav",
         )
 
