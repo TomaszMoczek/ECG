@@ -1,60 +1,74 @@
 #!/usr/bin/python3
 import os
+import numpy
 import pygame
 import configparser
+
+from scipy import signal
 
 from samples import Samples
 from dspplotter import DspPlotter
 
 
 def plot_signal(fs: int, data: tuple, labels: tuple, file_name: str) -> None:
-    global is_signal
     global is_sound
     global is_spectrogram
 
-    if is_signal:
-        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
+    dsp_plotter = DspPlotter()
 
-        Samples.write_wave_file(fs=fs, data=data, file_path=file_path)
+    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
 
-        if is_sound:
-            pygame.mixer.init(frequency=fs)
-            pygame.mixer.music.load(filename=file_path)
-            pygame.mixer.music.play(loops=-1)
+    Samples.write_wave_file(fs=fs, data=data, file_path=file_path)
 
-        dsp_plotter = DspPlotter()
+    if is_sound:
+        pygame.mixer.init(frequency=fs)
+        pygame.mixer.music.load(filename=file_path)
+        pygame.mixer.music.play(loops=-1)
 
-        dsp_plotter.plot(
+    dsp_plotter.plot(
+        fs=fs,
+        data=data,
+        labels=labels,
+        div_by_N=True,
+        log_freq=True,
+        block=False if is_spectrogram else True,
+    )
+
+    if is_spectrogram:
+        dsp_plotter.spectrogram(
             fs=fs,
             data=data,
             labels=labels,
-            div_by_N=True,
+            segmentsize=8,
             log_freq=True,
-            block=False if is_spectrogram else True,
+            vmin=-130,
         )
 
-        if is_spectrogram:
-            dsp_plotter.spectrogram(
-                fs=fs,
-                data=data,
-                labels=labels,
-                segmentsize=8,
-                log_freq=True,
-                vmin=-130,
-            )
-
-        if is_sound:
-            pygame.mixer.music.stop()
-            pygame.mixer.music.unload()
+    if is_sound:
+        pygame.mixer.music.stop()
+        pygame.mixer.music.unload()
 
 
 def main() -> None:
+    global is_signal
+
     samples = Samples()
 
     fs = samples.get_fs()
     data = samples.get_data()
 
-    plot_signal(fs=fs, data=data, labels=("MLII", "V1"), file_name="samples.wav")
+    if is_signal:
+        plot_signal(fs=fs, data=data, labels=("MLII", "V1"), file_name="samples.wav")
+
+        mlii = signal.wiener(im=numpy.array(data[0]))
+        v1 = signal.wiener(im=numpy.array(data[1]))
+
+        plot_signal(
+            fs=fs,
+            data=(numpy.ndarray.tolist(mlii), numpy.ndarray.tolist(v1)),
+            labels=("wiener(MLII)", "wiener(V1)"),
+            file_name="samples-wiener.wav",
+        )
 
 
 if __name__ == "__main__":
@@ -63,5 +77,4 @@ if __name__ == "__main__":
     is_signal = config.getboolean("default", "signal")
     is_sound = config.getboolean("default", "sound")
     is_spectrogram = config.getboolean("default", "spectrogram")
-
     main()
