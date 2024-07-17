@@ -1,4 +1,5 @@
 import os
+import numpy
 
 from samples import Samples
 
@@ -13,20 +14,12 @@ def test_get_fs() -> None:
 
 
 def test_get_data() -> None:
-    assert len(data[0]) == 3600 and len(data[1]) == 3600
+    assert data.shape == (3600, 2) and data.size == 7200
 
 
 def test_write_wave_file_false() -> None:
-    mlii = []
-    v1 = []
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav")
-    assert Samples.write_wave_file(fs=fs, data=(mlii,), file_path=file_path) == False
-    assert Samples.write_wave_file(fs=fs, data=(mlii, v1), file_path=file_path) == False
-    mlii.append(1.0)
-    assert Samples.write_wave_file(fs=fs, data=(mlii, v1), file_path=file_path) == False
-    mlii.append(2.0)
-    v1.append(1.0)
-    assert Samples.write_wave_file(fs=fs, data=(mlii, v1), file_path=file_path) == False
+    assert Samples.write_wave_file(fs=fs, data=numpy.empty((2, 3600)), file_path=file_path) == False
 
 
 def test_write_wave_file_true() -> None:
