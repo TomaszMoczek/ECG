@@ -14,7 +14,7 @@ def test_get_fs() -> None:
 
 
 def test_get_data() -> None:
-    assert data.shape == (3600, 2) and data.size == 7200
+    assert data.shape == (3600, 2) and data.size == 7200 and data.dtype == numpy.float64
 
 
 def test_write_wave_file_false() -> None:
