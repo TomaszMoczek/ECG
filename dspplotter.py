@@ -13,7 +13,7 @@ class DspPlotter:
     def spectrogram(
         self,
         fs: int,
-        data: tuple,
+        data: numpy.ndarray,
         labels: tuple,
         segmentsize: int = 64,
         overlap: int = 8,
@@ -36,15 +36,14 @@ class DspPlotter:
 
         N = len(data[0])
         segments = N // segmentsize - 1
-        window = signal.hann(segmentsize * overlap)
+        window = signal.windows.hann(segmentsize * overlap)
 
         numpy.seterr(all="ignore")
 
         for i in range(len(data)):
             X = []
-            _data = numpy.array(data[i])
 
-            if len(_data) != N:
+            if len(data[i]) != N:
                 print(
                     "Lengths of particular items of data are likely different for the spectrogram to be correctly plotted."
                 )
@@ -55,7 +54,7 @@ class DspPlotter:
                     j * N // segments,
                     j * N // segments + segmentsize * overlap,
                 )
-                subdata = _data[r]
+                subdata = data[i][r]
                 subdata = subdata * window
                 Y = numpy.fft.fft(subdata)
                 Y = Y / len(Y)
@@ -104,7 +103,7 @@ class DspPlotter:
     def plot(
         self,
         fs: int,
-        data: tuple,
+        data: numpy.ndarray,
         labels: tuple,
         freqresp: bool = True,
         padwidth: int = 1024,

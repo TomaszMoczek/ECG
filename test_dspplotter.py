@@ -7,7 +7,7 @@ samples = Samples()
 dsp_plotter = DspPlotter()
 
 fs = samples.get_fs()
-data = samples.get_data()
+data = samples.get_data().transpose()
 
 labels = ("MLII", "V1")
 
@@ -23,6 +23,7 @@ def test_plot() -> None:
         labels=labels,
         div_by_N=True,
         log_freq=True,
+        phaseresp=True,
         file=file,
     )
     assert os.path.exists(file) == True
