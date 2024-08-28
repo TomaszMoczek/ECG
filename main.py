@@ -10,7 +10,7 @@ from samples import Samples
 from dspplotter import DspPlotter
 
 
-def plot_signal(fs: int, data: tuple, labels: tuple, file_name: str) -> None:
+def plot_signal(fs: int, data: numpy.ndarray, labels: tuple, file_name: str) -> None:
     global is_sound
     global is_spectrogram
 
@@ -18,7 +18,7 @@ def plot_signal(fs: int, data: tuple, labels: tuple, file_name: str) -> None:
 
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
 
-    Samples.write_wave_file(fs=fs, data=data, file_path=file_path)
+    Samples.write_wave_file(fs=fs, data=numpy.transpose(data), file_path=file_path)
 
     if is_sound:
         pygame.mixer.init(frequency=fs)
@@ -55,19 +55,19 @@ def main() -> None:
     samples = Samples()
 
     fs = samples.get_fs()
-    data = samples.get_data()
+    data = samples.get_data().transpose()
 
     if is_signal:
         plot_signal(fs=fs, data=data, labels=("MLII", "V1"), file_name="samples.wav")
 
-        mlii = signal.wiener(im=numpy.array(data[0]))
-        v1 = signal.wiener(im=numpy.array(data[1]))
+        mlii = signal.wiener(im=data[0])
+        v1 = signal.wiener(im=data[1])
 
         plot_signal(
             fs=fs,
-            data=(numpy.ndarray.tolist(mlii), numpy.ndarray.tolist(v1)),
+            data=numpy.vstack((mlii, v1)),
             labels=("MLII [Wiener filtered]", "V1 [Wiener filtered]"),
-            file_name="samples-wiener.wav",
+            file_name="samples-wiener-filtered.wav",
         )
 
 
