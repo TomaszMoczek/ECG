@@ -19,7 +19,10 @@ def test_get_data() -> None:
 
 def test_write_wave_file_false() -> None:
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "samples.wav")
-    assert Samples.write_wave_file(fs=fs, data=numpy.empty((2, 3600)), file_path=file_path) == False
+    assert (
+        Samples.write_wave_file(fs=fs, data=numpy.empty((2, 3600)), file_path=file_path)
+        == False
+    )
 
 
 def test_write_wave_file_true() -> None:
