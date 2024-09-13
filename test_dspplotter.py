@@ -7,7 +7,7 @@ samples = Samples()
 dsp_plotter = DspPlotter()
 
 fs = samples.get_fs()
-data = samples.get_data().transpose()
+data = samples.get_data()
 
 labels = ("MLII", "V1")
 

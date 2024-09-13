@@ -17,12 +17,12 @@ class Samples:
         )
         data_frame: pandas.DataFrame = pandas.read_csv(file_path, header=[0, 1])
         data: numpy.ndarray = data_frame.to_numpy()
-        return data[:, [1, 2]].astype(numpy.float64)
+        return data[:, [1, 2]].astype(numpy.float64).T
 
     def write_wave_file(fs: int, data: numpy.ndarray, file_path: str) -> bool:
-        if data.shape != (3600, 2) or data.size != 7200 or data.dtype != numpy.float64:
+        if data.shape != (2, 3600) or data.dtype != numpy.float64:
             return False
-        audio = (data * (2**15 - 1)).astype(numpy.int16)
+        audio = (data.T * (2**15 - 1)).astype(numpy.int16)
         with wave.open(file_path, "w") as file:
             file.setnchannels(2)
             file.setsampwidth(2)

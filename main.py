@@ -18,7 +18,7 @@ def plot_signal(fs: int, data: numpy.ndarray, labels: tuple, file_name: str) -> 
 
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
 
-    Samples.write_wave_file(fs=fs, data=numpy.transpose(data), file_path=file_path)
+    Samples.write_wave_file(fs=fs, data=data, file_path=file_path)
 
     if is_sound:
         pygame.mixer.init(frequency=fs)
@@ -55,7 +55,7 @@ def main() -> None:
     samples = Samples()
 
     fs = samples.get_fs()
-    data = samples.get_data().transpose()
+    data = samples.get_data()
 
     if is_signal:
         plot_signal(fs=fs, data=data, labels=("MLII", "V1"), file_name="samples.wav")
