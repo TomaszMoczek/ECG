@@ -70,6 +70,22 @@ def main() -> None:
             file_name="samples-wiener-filtered.wav",
         )
 
+    w0 = 60.0
+    bw = 2.0
+    b, a = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
+    x = signal.unit_impulse(shape=128)
+    y = signal.lfilter(b=b, a=a, x=x)
+
+    dsp_plotter = DspPlotter()
+
+    dsp_plotter.plot(
+        fs=fs,
+        data=numpy.vstack((y,)),
+        labels=("IIR notch filter 60 Hz",),
+        log_freq=True,
+        phaseresp=True,
+    )
+
 
 if __name__ == "__main__":
     config = configparser.ConfigParser()
