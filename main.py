@@ -72,16 +72,26 @@ def main() -> None:
 
     w0 = 60.0
     bw = 2.0
-    b, a = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
+    b1, a1 = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
+    wp = 30.0
+    ws = 90.0
+    gpass = 1.0
+    gstop = 90.0
+    b2, a2 = signal.iirdesign(
+        wp=wp, ws=ws, gpass=gpass, gstop=gstop, ftype="butter", fs=float(fs)
+    )
     x = signal.unit_impulse(shape=128)
-    y = signal.lfilter(b=b, a=a, x=x)
+    y1 = signal.lfilter(b=b1, a=a1, x=x)
+    y2 = signal.lfilter(b=b2, a=a2, x=x)
+    y3 = signal.lfilter(b=b2, a=a2, x=x)
+    y3 = signal.lfilter(b=b1, a=a1, x=y3)
 
     dsp_plotter = DspPlotter()
 
     dsp_plotter.plot(
         fs=fs,
-        data=numpy.vstack((y,)),
-        labels=("IIR notch filter 60 Hz",),
+        data=numpy.vstack((y1, y2, y3)),
+        labels=("IIR notch 60 Hz", "IIR low-pass 30 Hz", "IIR cascaded"),
         log_freq=True,
         phaseresp=True,
     )
