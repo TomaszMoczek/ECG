@@ -80,35 +80,40 @@ def main() -> None:
         )
 
     polynomials: list[dict] = []
-    x = signal.unit_impulse(shape=128)
+    x = signal.unit_impulse(shape=1024)
     w0 = 60.0
     bw = 2.0
     b, a = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
     polynomials.append({"b": b, "a": a})
-    wp = 30.0
-    ws = 90.0
-    gpass = 1.0
-    gstop = 90.0
-    b, a = signal.iirdesign(
-        wp=wp, ws=ws, gpass=gpass, gstop=gstop, ftype="butter", fs=float(fs)
-    )
+    wn = 30.0
+    b, a = signal.butter(N=4, Wn=wn, btype="lowpass", fs=float(fs))
+    polynomials.append({"b": b, "a": a})
+    wn = 0.5
+    b, a = signal.butter(N=6, Wn=wn, btype="highpass", fs=float(fs))
     polynomials.append({"b": b, "a": a})
     for i in range(0, len(polynomials)):
         if i == 0:
             y1 = signal.lfilter(b=polynomials[i]["b"], a=polynomials[i]["a"], x=x)
         elif i == 1:
             y2 = signal.lfilter(b=polynomials[i]["b"], a=polynomials[i]["a"], x=x)
-        y3 = signal.lfilter(
-            b=polynomials[i]["b"], a=polynomials[i]["a"], x=x if i == 0 else y3
+        elif i == 2:
+            y3 = signal.lfilter(b=polynomials[i]["b"], a=polynomials[i]["a"], x=x)
+        y4 = signal.lfilter(
+            b=polynomials[i]["b"], a=polynomials[i]["a"], x=x if i == 0 else y4
         )
 
     dsp_plotter = DspPlotter()
 
     dsp_plotter.plot(
         fs=fs,
-        data=numpy.vstack((y1, y2, y3)),
-        labels=("IIR notch 60 Hz", "IIR low-pass 30 Hz", "IIR cascaded"),
-        log_freq=True,
+        data=numpy.vstack((y1, y2, y3, y4)),
+        labels=(
+            "IIR notch 60 Hz",
+            "IIR low-pass 30 Hz",
+            "IIR high-pass 0.5 Hz",
+            "IIR cascaded",
+        ),
+        padwidth=8192,
         phaseresp=True,
     )
 
