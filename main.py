@@ -80,7 +80,7 @@ def main() -> None:
         )
 
     polynomials: list[dict] = []
-    x = signal.unit_impulse(shape=1024)
+    x = signal.unit_impulse(shape=128)
     w0 = 60.0
     bw = 2.0
     b, a = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
@@ -89,7 +89,7 @@ def main() -> None:
     b, a = signal.butter(N=4, Wn=wn, btype="lowpass", fs=float(fs))
     polynomials.append({"b": b, "a": a})
     wn = 0.5
-    b, a = signal.butter(N=6, Wn=wn, btype="highpass", fs=float(fs))
+    b, a = signal.butter(N=7, Wn=wn, btype="highpass", fs=float(fs))
     polynomials.append({"b": b, "a": a})
     for i in range(0, len(polynomials)):
         if i == 0:
@@ -113,7 +113,6 @@ def main() -> None:
             "IIR high-pass 0.5 Hz",
             "IIR cascaded",
         ),
-        padwidth=8192,
         phaseresp=True,
     )
 
