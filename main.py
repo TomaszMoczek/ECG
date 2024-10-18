@@ -18,7 +18,11 @@ def plot_signal(fs: int, data: numpy.ndarray, labels: tuple, file_name: str) -> 
 
     file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
 
-    Samples.write_wave_file(fs=fs, data=data, file_path=file_path)
+    Samples.write_wave_file(
+        fs=fs,
+        data=data,
+        file_path=file_path,
+    )
 
     if is_sound:
         pygame.mixer.init(frequency=fs)
@@ -58,7 +62,12 @@ def main() -> None:
     data = samples.get_data()
 
     if is_signal:
-        plot_signal(fs=fs, data=data, labels=("MLII", "V1"), file_name="samples.wav")
+        plot_signal(
+            fs=fs,
+            data=data,
+            labels=("MLII", "V1"),
+            file_name="samples.wav",
+        )
 
         mlii = signal.wiener(im=data[0])
         v1 = signal.wiener(im=data[1])
@@ -70,21 +79,26 @@ def main() -> None:
             file_name="samples-wiener-filtered.wav",
         )
 
+    polynomials: list[dict] = []
+    x = signal.unit_impulse(shape=128)
     w0 = 60.0
     bw = 2.0
-    b1, a1 = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
+    b, a = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
+    polynomials.append({"b": b, "a": a})
     wp = 30.0
     ws = 90.0
     gpass = 1.0
     gstop = 90.0
-    b2, a2 = signal.iirdesign(
+    b, a = signal.iirdesign(
         wp=wp, ws=ws, gpass=gpass, gstop=gstop, ftype="butter", fs=float(fs)
     )
-    x = signal.unit_impulse(shape=128)
-    y1 = signal.lfilter(b=b1, a=a1, x=x)
-    y2 = signal.lfilter(b=b2, a=a2, x=x)
-    y3 = signal.lfilter(b=b2, a=a2, x=x)
-    y3 = signal.lfilter(b=b1, a=a1, x=y3)
+    polynomials.append({"b": b, "a": a})
+    y1 = signal.lfilter(b=polynomials[0]["b"], a=polynomials[0]["a"], x=x)
+    y2 = signal.lfilter(b=polynomials[1]["b"], a=polynomials[1]["a"], x=x)
+    for i in range(0, len(polynomials)):
+        y3 = signal.lfilter(
+            b=polynomials[i]["b"], a=polynomials[i]["a"], x=x if i == 0 else y3
+        )
 
     dsp_plotter = DspPlotter()
 
