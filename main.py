@@ -93,9 +93,11 @@ def main() -> None:
         wp=wp, ws=ws, gpass=gpass, gstop=gstop, ftype="butter", fs=float(fs)
     )
     polynomials.append({"b": b, "a": a})
-    y1 = signal.lfilter(b=polynomials[0]["b"], a=polynomials[0]["a"], x=x)
-    y2 = signal.lfilter(b=polynomials[1]["b"], a=polynomials[1]["a"], x=x)
     for i in range(0, len(polynomials)):
+        if i == 0:
+            y1 = signal.lfilter(b=polynomials[i]["b"], a=polynomials[i]["a"], x=x)
+        elif i == 1:
+            y2 = signal.lfilter(b=polynomials[i]["b"], a=polynomials[i]["a"], x=x)
         y3 = signal.lfilter(
             b=polynomials[i]["b"], a=polynomials[i]["a"], x=x if i == 0 else y3
         )
