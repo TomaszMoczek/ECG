@@ -57,9 +57,12 @@ def main() -> None:
     global is_signal
 
     samples = Samples()
+    dsp_plotter = DspPlotter()
 
     fs = samples.get_fs()
     data = samples.get_data()
+
+    x = signal.unit_impulse(shape=128)
 
     if is_signal:
         plot_signal(
@@ -69,40 +72,31 @@ def main() -> None:
             file_name="samples.wav",
         )
 
-        mlii = signal.wiener(im=data[0])
-        v1 = signal.wiener(im=data[1])
+        data[0] = signal.wiener(im=data[0])
+        data[1] = signal.wiener(im=data[1])
 
         plot_signal(
             fs=fs,
-            data=numpy.vstack((mlii, v1)),
+            data=data,
             labels=("MLII [Wiener filtered]", "V1 [Wiener filtered]"),
             file_name="samples-wiener-filtered.wav",
         )
 
-    polynomials: list[dict] = []
-    x = signal.unit_impulse(shape=128)
     w0 = 60.0
     bw = 2.0
     b, a = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
-    polynomials.append({"b": b, "a": a})
-    wn = 30.0
-    b, a = signal.butter(N=4, Wn=wn, btype="lowpass", fs=float(fs))
-    polynomials.append({"b": b, "a": a})
-    wn = 0.5
-    b, a = signal.butter(N=7, Wn=wn, btype="highpass", fs=float(fs))
-    polynomials.append({"b": b, "a": a})
-    for i in range(0, len(polynomials)):
-        if i == 0:
-            y1 = signal.lfilter(b=polynomials[i]["b"], a=polynomials[i]["a"], x=x)
-        elif i == 1:
-            y2 = signal.lfilter(b=polynomials[i]["b"], a=polynomials[i]["a"], x=x)
-        elif i == 2:
-            y3 = signal.lfilter(b=polynomials[i]["b"], a=polynomials[i]["a"], x=x)
-        y4 = signal.lfilter(
-            b=polynomials[i]["b"], a=polynomials[i]["a"], x=x if i == 0 else y4
-        )
+    y1 = signal.lfilter(b=b, a=a, x=x)
+    y4 = signal.lfilter(b=b, a=a, x=x)
 
-    dsp_plotter = DspPlotter()
+    wn = 30.0
+    sos = signal.butter(N=4, Wn=wn, btype="lowpass", output="sos", fs=float(fs))
+    y2 = signal.sosfilt(sos=sos, x=x)
+    y4 = signal.sosfilt(sos=sos, x=y4)
+
+    wn = 0.5
+    sos = signal.butter(N=10, Wn=wn, btype="highpass", output="sos", fs=float(fs))
+    y3 = signal.sosfilt(sos=sos, x=x)
+    y4 = signal.sosfilt(sos=sos, x=y4)
 
     dsp_plotter.plot(
         fs=fs,
