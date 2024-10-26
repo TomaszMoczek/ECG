@@ -34,7 +34,6 @@ def plot_signal(fs: int, data: numpy.ndarray, labels: tuple, file_name: str) -> 
         data=data,
         labels=labels,
         div_by_N=True,
-        log_freq=True,
         block=False if is_spectrogram else True,
     )
 
@@ -44,7 +43,6 @@ def plot_signal(fs: int, data: numpy.ndarray, labels: tuple, file_name: str) -> 
             data=data,
             labels=labels,
             segmentsize=8,
-            log_freq=True,
             vmin=-130,
         )
 
@@ -87,16 +85,22 @@ def main() -> None:
     b, a = signal.iirnotch(w0=w0, Q=w0 / bw, fs=float(fs))
     y1 = signal.lfilter(b=b, a=a, x=x)
     y4 = signal.lfilter(b=b, a=a, x=x)
+    data[0] = signal.filtfilt(b=b, a=a, x=data[0])
+    data[1] = signal.filtfilt(b=b, a=a, x=data[1])
 
     wn = 30.0
-    sos = signal.butter(N=4, Wn=wn, btype="lowpass", output="sos", fs=float(fs))
+    sos = signal.butter(N=2, Wn=wn, btype="lowpass", output="sos", fs=float(fs))
     y2 = signal.sosfilt(sos=sos, x=x)
     y4 = signal.sosfilt(sos=sos, x=y4)
+    data[0] = signal.sosfiltfilt(sos=sos, x=data[0])
+    data[1] = signal.sosfiltfilt(sos=sos, x=data[1])
 
     wn = 0.5
-    sos = signal.butter(N=10, Wn=wn, btype="highpass", output="sos", fs=float(fs))
+    sos = signal.butter(N=2, Wn=wn, btype="highpass", output="sos", fs=float(fs))
     y3 = signal.sosfilt(sos=sos, x=x)
-    y4 = signal.sosfilt(sos=sos, x=y4)
+    # y4 = signal.sosfilt(sos=sos, x=y4)
+    # data[0] = signal.sosfiltfilt(sos=sos, x=data[0])
+    # data[1] = signal.sosfiltfilt(sos=sos, x=data[1])
 
     dsp_plotter.plot(
         fs=fs,
@@ -109,6 +113,14 @@ def main() -> None:
         ),
         phaseresp=True,
     )
+
+    if is_signal:
+        plot_signal(
+            fs=fs,
+            data=data,
+            labels=("MLII [IIR filtered]", "V1 [IIR filtered]"),
+            file_name="samples-iir-filtered.wav",
+        )
 
 
 if __name__ == "__main__":
