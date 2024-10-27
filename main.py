@@ -34,6 +34,7 @@ def plot_signal(fs: int, data: numpy.ndarray, labels: tuple, file_name: str) -> 
         data=data,
         labels=labels,
         div_by_N=True,
+        log_freq=True,
         block=False if is_spectrogram else True,
     )
 
@@ -43,6 +44,7 @@ def plot_signal(fs: int, data: numpy.ndarray, labels: tuple, file_name: str) -> 
             data=data,
             labels=labels,
             segmentsize=8,
+            log_freq=True,
             vmin=-130,
         )
 
@@ -98,7 +100,7 @@ def main() -> None:
     wn = 0.5
     sos = signal.butter(N=2, Wn=wn, btype="highpass", output="sos", fs=float(fs))
     y3 = signal.sosfilt(sos=sos, x=x)
-    # y4 = signal.sosfilt(sos=sos, x=y4)
+    y4 = signal.sosfilt(sos=sos, x=y4)
     # data[0] = signal.sosfiltfilt(sos=sos, x=data[0])
     # data[1] = signal.sosfiltfilt(sos=sos, x=data[1])
 
