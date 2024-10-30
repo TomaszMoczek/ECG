@@ -90,11 +90,11 @@ def main() -> None:
         data[0] = signal.filtfilt(b=b, a=a, x=data[0])
         data[1] = signal.filtfilt(b=b, a=a, x=data[1])
     else:
-        b, a = signal.iirnotch(w0=60.0, Q=(60.0 / 2.0), fs=float(fs))
-        y1 = signal.lfilter(b=b, a=a, x=x)
-        y4 = signal.lfilter(b=b, a=a, x=x)
-        data[0] = signal.filtfilt(b=b, a=a, x=data[0])
-        data[1] = signal.filtfilt(b=b, a=a, x=data[1])
+        h = signal.firwin(numtaps=231, cutoff=[59.0, 61.0], fs=float(fs))
+        y1 = signal.lfilter(b=h, a=1, x=x)
+        y4 = signal.lfilter(b=h, a=1, x=x)
+        data[0] = signal.filtfilt(b=h, a=1, x=data[0])
+        data[1] = signal.filtfilt(b=h, a=1, x=data[1])
 
     if is_iir:
         sos = signal.butter(N=2, Wn=30.0, btype="lowpass", output="sos", fs=float(fs))
