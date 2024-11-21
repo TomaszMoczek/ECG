@@ -99,7 +99,6 @@ def main() -> None:
             "IIR 9-th order low-pass 30 Hz",
             "FIR 18-th order low-pass 30 Hz",
         ),
-        log_freq=False,
         phaseresp=True,
     )
 
