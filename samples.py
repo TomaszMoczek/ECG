@@ -19,7 +19,11 @@ class Samples:
         data: numpy.ndarray = data_frame.to_numpy()
         return data[:, [1, 2]].astype(numpy.float64).T
 
-    def write_wave_file(fs: int, data: numpy.ndarray, file_path: str) -> bool:
+    def write_wave_file(
+        fs: int,
+        data: numpy.ndarray,
+        file_path: str,
+    ) -> bool:
         if data.shape != (2, 3600) or data.dtype != numpy.float64:
             return False
         audio = (data.T * (2**15 - 1)).astype(numpy.int16)

@@ -10,7 +10,12 @@ from samples import Samples
 from dspplotter import DspPlotter
 
 
-def plot_signal(fs: int, data: numpy.ndarray, labels: tuple, file_name: str) -> None:
+def plot_signal(
+    fs: int,
+    data: numpy.ndarray,
+    labels: tuple,
+    file_name: str,
+) -> None:
     global is_sound
     global is_spectrogram
 
@@ -84,35 +89,36 @@ def main() -> None:
 
     sos = signal.butter(N=9, Wn=30.0, btype="lowpass", output="sos", fs=float(fs))
     y1 = signal.sosfilt(sos=sos, x=x)
-    # data[0] = signal.sosfiltfilt(sos=sos, x=data[0])
-    # data[1] = signal.sosfiltfilt(sos=sos, x=data[1])
 
     h = signal.firwin(numtaps=18, cutoff=30.0, fs=float(fs))
     y2 = signal.lfilter(b=h, a=1, x=x)
-    # data[0] = signal.filtfilt(b=h, a=1, x=data[0])
-    # data[1] = signal.filtfilt(b=h, a=1, x=data[1])
 
     dsp_plotter.plot(
         fs=fs,
         data=numpy.vstack((y1, y2)),
-        labels=(
-            "IIR 9-th order low-pass 30 Hz",
-            "FIR 18-th order low-pass 30 Hz",
-        ),
+        labels=("IIR, 9-th order, lowpass 30 Hz", "FIR, 18-th order, lowpass 30 Hz"),
         phaseresp=True,
     )
 
     if is_signal:
+        mlii = signal.sosfiltfilt(sos=sos, x=data[0])
+        v1 = signal.sosfiltfilt(sos=sos, x=data[1])
+
         plot_signal(
             fs=fs,
-            data=data,
-            labels=(
-                "MLII [IIR filtered]" if is_iir else "MLII [FIR filtered]",
-                "V1 [IIR filtered]" if is_iir else "V1 [FIR filtered]",
-            ),
-            file_name=(
-                "samples-iir-filtered.wav" if is_iir else "samples-fir-filtered.wav"
-            ),
+            data=numpy.vstack((mlii, v1)),
+            labels=("MLII [Wiener/IIR filtered]", "V1 [Wiener/IIR filtered]"),
+            file_name=("samples-wiener-iir-filtered.wav"),
+        )
+
+        mlii = signal.filtfilt(b=h, a=1, x=data[0])
+        v1 = signal.filtfilt(b=h, a=1, x=data[1])
+
+        plot_signal(
+            fs=fs,
+            data=numpy.vstack((mlii, v1)),
+            labels=("MLII [Wiener/FIR filtered]", "V1 [Wiener/FIR filtered]"),
+            file_name=("samples-wiener-fir-filtered.wav"),
         )
 
 
